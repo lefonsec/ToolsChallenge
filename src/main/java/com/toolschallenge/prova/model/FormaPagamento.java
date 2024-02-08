@@ -14,7 +14,6 @@ import java.util.UUID;
 public class FormaPagamento {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     @Enumerated(EnumType.STRING)

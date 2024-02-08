@@ -1,6 +1,7 @@
 package com.toolschallenge.prova.model;
 
 import jakarta.persistence.*;
+import lombok.Generated;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,9 +13,8 @@ import java.util.UUID;
 @Table(name = "transacao")
 public class Transacao {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", nullable = false)
-    private UUID id;
+    @Column(unique = true,nullable = false)
+    private Long id;
 
     @Column(nullable = false)
     private String cartao;

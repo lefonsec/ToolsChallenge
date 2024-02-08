@@ -5,7 +5,7 @@ public enum TipoPagamento {
     PARCELADO_LOJA("PARCELADO LOJA"),
     PARCELADO_EMISSOR("PARCELADO EMISSOR");
 
-    private String tipoPagamento;
+    private final String tipoPagamento;
 
     TipoPagamento(String tipoPagamento) {
         this.tipoPagamento = tipoPagamento;
