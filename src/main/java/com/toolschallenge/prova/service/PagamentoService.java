@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class PagamentoService {
+public class PagamentoService implements  InPagamentoServico {
 
     private final TransacaoRepository transacaoRepository;
     private final DescricaoRepository descricaoRepository;
