@@ -1,10 +1,12 @@
 package com.toolschallenge.prova.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.toolschallenge.prova.model.enuns.Status;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -15,19 +17,18 @@ import java.time.LocalDateTime;
 @Setter
 public class DescricaoDTO {
 
-    @NotBlank
+    @NotNull
     private BigDecimal valor;
 
-    @NotBlank
-    @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm:ss")
+    @NotNull
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime dataHora;
 
-    @NotBlank
+    @NotNull
     private String estabelecimento;
 
     private String nsu;
 
-    @Column(name = "codigo_autorizacao")
     private String codigoAutorizacao;
 
     @Enumerated(EnumType.STRING)

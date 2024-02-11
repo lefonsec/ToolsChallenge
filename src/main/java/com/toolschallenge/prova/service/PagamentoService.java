@@ -1,22 +1,25 @@
 package com.toolschallenge.prova.service;
 
-import com.toolschallenge.prova.dto.DescricaoDTO;
-import com.toolschallenge.prova.dto.FormaPagamentoDTO;
+import com.toolschallenge.prova.dto.ListaTransacoesResponse;
 import com.toolschallenge.prova.dto.TransacaoDTO;
-import com.toolschallenge.prova.model.Descricao;
-import com.toolschallenge.prova.model.FormaPagamento;
+import com.toolschallenge.prova.dto.TransacaoResponse;
+import com.toolschallenge.prova.exception.NotFoundException;
 import com.toolschallenge.prova.model.Transacao;
 import com.toolschallenge.prova.model.enuns.Status;
 import com.toolschallenge.prova.repository.DescricaoRepository;
 import com.toolschallenge.prova.repository.FormaPagamentoRepository;
 import com.toolschallenge.prova.repository.TransacaoRepository;
+import com.toolschallenge.prova.utils.TransacaoServiceUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -25,75 +28,54 @@ public class PagamentoService {
     private final TransacaoRepository transacaoRepository;
     private final DescricaoRepository descricaoRepository;
     private final FormaPagamentoRepository formaPagamentoRepository;
+    private final TransacaoServiceUtils transacaoServiceUtils;
 
-    public TransacaoDTO realizarPagamento(TransacaoDTO transacaoDTO) {
-        Transacao transacao = new Transacao();
-        BeanUtils.copyProperties(transacaoDTO, transacao);
-
-        Descricao descricao = new Descricao();
-        BeanUtils.copyProperties(transacaoDTO.getDescricao(), descricao);
-//        descricao.setValor(transacaoDTO.getDescricao().getValor());
-//        descricao.setDataHora(transacaoDTO.getDescricao().getDataHora());
-//        descricao.setEstabelecimento(transacaoDTO.getDescricao().getEstabelecimento());
-
-        FormaPagamento formaPagamento = new FormaPagamento();
-        BeanUtils.copyProperties(transacaoDTO.getFormaPagamento(), formaPagamento);
-//        formaPagamento.setTipo(transacaoDTO.getFormaPagamento().getTipo());
-//        formaPagamento.setParcela(transacaoDTO.getFormaPagamento().getParcela());
-        Random random = new Random();
-        boolean autorizado = random.nextBoolean();
-        descricao.setStatus(autorizado ? Status.AUTORIZADO : Status.NEGADO);
-
-        descricaoRepository.save(descricao);
-        formaPagamentoRepository.save(formaPagamento);
-
-        transacao.setDescricao(descricao);
-        transacao.setFormaPagamento(formaPagamento);
-
+    @Transactional
+    public TransacaoResponse realizarPagamento(TransacaoDTO transacaoDTO) {
+        transacaoServiceUtils.validarTransacao(transacaoDTO, transacaoRepository);
+        Transacao transacao = transacaoServiceUtils.criarTransacao(transacaoDTO, descricaoRepository, formaPagamentoRepository);
         Transacao transacaoSalva = transacaoRepository.save(transacao);
-        return construirTransacaoDTO(transacaoSalva);
+        return transacaoServiceUtils.construirResposta(transacaoSalva);
     }
 
-    public TransacaoDTO estornarPagamento(String id) {
-        Optional<Transacao> buscaTransacao = transacaoRepository.findById(Long.parseLong(id));
-        if (buscaTransacao.isEmpty()) {
-            return null;
+    @Transactional
+    public TransacaoResponse estornarPagamento(String id) {
+        Optional<Transacao> optionalTransacao = transacaoRepository.findById(Long.parseLong(id));
+        if (optionalTransacao.isEmpty()) {
+            throw new NotFoundException("ID não encontrado, não pode ter estorno.");
         }
 
-        Transacao transacao = buscaTransacao.get();
+        Transacao transacao = optionalTransacao.get();
         transacao.getDescricao().setStatus(Status.CANCELADO);
         Transacao transacaoEstornada = transacaoRepository.save(transacao);
-        return construirTransacaoDTO(transacaoEstornada);
+
+        return transacaoServiceUtils.construirResposta(transacaoEstornada);
     }
 
-    public TransacaoDTO consultarPagamentoPorID(String id) {
-        return null;
+    @Transactional(readOnly = true)
+    public TransacaoResponse consultarPagamentoPorID(String id) {
+        Optional<Transacao> optionalTransacao = transacaoRepository.findById(Long.parseLong(id));
+        if (optionalTransacao.isEmpty()) {
+            throw new NotFoundException("ID não encontrado.");
+        }
+        Transacao transacao = optionalTransacao.get();
+
+        TransacaoResponse response = new TransacaoResponse();
+        response.setTransacao(transacaoServiceUtils.construirTransacaoDTO(transacao));
+
+        return response;
     }
 
-    public TransacaoDTO consultarPagamentos(String id) {
-        return null;
-    }
+    @Transactional(readOnly = true)
+    public ListaTransacoesResponse consultarTodosPagamentos(int pagina, int tamanhoPagina) {
+        Pageable pageable = PageRequest.of(pagina, tamanhoPagina);
+        Page<Transacao> pageTransacoes = transacaoRepository.findAll(pageable);
 
-    private TransacaoDTO construirTransacaoDTO(Transacao transacao) {
-        TransacaoDTO transacaoDTO = new TransacaoDTO();
-        transacaoDTO.setCartao(transacao.getCartao());
-        transacaoDTO.setId(UUID.fromString(transacao.getId().toString()));
+        List<TransacaoDTO> transacoesDTO = pageTransacoes.getContent().stream().map(transacaoServiceUtils::construirTransacaoDTO).collect(Collectors.toList());
 
-        DescricaoDTO descricaoDTO = new DescricaoDTO();
-        descricaoDTO.setValor(transacao.getDescricao().getValor());
-        descricaoDTO.setDataHora(transacao.getDescricao().getDataHora());
-        descricaoDTO.setEstabelecimento(transacao.getDescricao().getEstabelecimento());
-        descricaoDTO.setNsu(transacao.getDescricao().getNsu());
-        descricaoDTO.setCodigoAutorizacao(transacao.getDescricao().getCodigoAutorizacao());
-        descricaoDTO.setStatus(transacao.getDescricao().getStatus());
+        ListaTransacoesResponse response = new ListaTransacoesResponse();
+        response.setTransacoes(transacoesDTO);
 
-        FormaPagamentoDTO formaPagamentoDTO = new FormaPagamentoDTO();
-        formaPagamentoDTO.setTipo(transacao.getFormaPagamento().getTipo());
-        formaPagamentoDTO.setParcela(transacao.getFormaPagamento().getParcela());
-
-        transacaoDTO.setDescricao(descricaoDTO);
-        transacaoDTO.setFormaPagamento(formaPagamentoDTO);
-
-        return transacaoDTO;
+        return response;
     }
 }

@@ -3,6 +3,7 @@ package com.toolschallenge.prova.model;
 import com.toolschallenge.prova.model.enuns.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,6 +21,7 @@ public class Descricao {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     private BigDecimal valor;
 
     @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm:ss")

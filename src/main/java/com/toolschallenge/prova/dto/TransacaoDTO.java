@@ -1,23 +1,23 @@
 package com.toolschallenge.prova.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.UUID;
 
 @Getter
 @Setter
 public class TransacaoDTO {
-    @NotBlank
+
+    @NotEmpty(message = "Preencher numero do Cartão")
     private String cartao;
 
-    @NotBlank
-    private UUID id;
+    @NotNull(message = "ID não pode ser nulo")
+    private Long id;
 
-    @NotBlank
+    @NotNull(message = "Preencher descrição")
     private DescricaoDTO descricao;
 
-    @NotBlank
+    @NotNull(message = "Preencher forma pagamento")
     private FormaPagamentoDTO formaPagamento;
 }

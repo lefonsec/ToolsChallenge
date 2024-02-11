@@ -1,6 +1,7 @@
 package com.toolschallenge.prova.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Generated;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +15,7 @@ import java.util.UUID;
 public class Transacao {
     @Id
     @Column(unique = true,nullable = false)
+    @NotNull(message = "id não pode ser nulo")
     private Long id;
 
     @Column(nullable = false)
