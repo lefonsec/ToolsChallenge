@@ -57,3 +57,4 @@ Este é um exemplo simples de aplicação para gerenciar transações financeira
 - Padrão de projetos -> DTO,Padrão de Projeto Service
 - JPA
 - Git/Github
+- H2
